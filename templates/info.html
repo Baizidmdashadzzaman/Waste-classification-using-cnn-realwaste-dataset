@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}বর্জ্য সম্পর্কে তথ্য{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>বর্জ্য সম্পর্কে তথ্য</h1>
+    <div class="info-section">
+        {% for class_name, info_text in info.items() %}
+        <div class="info-card">
+            <h3>{{ class_name }}</h3>
+            <p>{{ info_text }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

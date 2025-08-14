@@ -1,0 +1,370 @@
+{% extends "base.html" %}
+
+{% block title %}বর্জ্য শ্রেণিবিভাগ{% endblock %}
+
+{% block head_extras %}
+<style>
+    .upload-area {
+        border: 3px dashed var(--secondary-color);
+        border-radius: var(--border-radius);
+        padding: 3rem 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .upload-area:hover {
+        background-color: #E1F5E6;
+    }
+
+    .upload-area h3 {
+        color: var(--primary-color);
+        margin-top: 0;
+    }
+
+    #file-name {
+        margin-top: 10px;
+        font-style: italic;
+    }
+
+    #upload-button {
+        background-color: var(--primary-color);
+        color: var(--light-color);
+        border: none;
+        padding: 15px 30px;
+        font-size: 1.2rem;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: background-color 0.3s ease, transform 0.2s ease;
+        box-shadow: var(--shadow);
+        margin-top: 1rem;
+        font-family: 'Tiro Bangla', serif;
+    }
+
+    #upload-button:hover {
+        background-color: #388E3C;
+        transform: scale(1.05);
+    }
+
+    #upload-button:disabled {
+        background-color: #BDBDBD;
+        cursor: not-allowed;
+        font-family: 'Tiro Bangla', serif;
+    }
+
+    #preview-image {
+        max-width: 100%;
+        max-height: 100%;
+        border-radius: var(--border-radius);
+        margin-top: 1rem;
+        display: none;
+        box-shadow: var(--shadow);
+    }
+
+    #prediction-results {
+        margin-top: 2rem;
+        text-align: left;
+    }
+
+    .result-bar {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .bar-label {
+        width: 150px; /* Fixed width for labels */
+        flex-shrink: 0;
+        font-weight: bold;
+    }
+
+    .progress-container {
+        flex-grow: 1;
+        background-color: #e0e0e0;
+        border-radius: 5px;
+        height: 25px;
+        margin-left: 10px;
+        position: relative;
+    }
+
+    .progress-bar {
+        background-color: var(--primary-color);
+        height: 100%;
+        border-radius: 5px;
+        transition: width 0.5s ease-in-out;
+        position: absolute;
+        top: 0;
+        left: 0;
+    }
+
+    .progress-text {
+        color: var(--dark-color);
+        font-weight: bold;
+        position: absolute;
+        right: 5px;
+        top: 50%;
+        transform: translateY(-50%);
+    }
+
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.8);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 1000;
+    }
+
+    .spinner {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid var(--primary-color);
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+        margin-top: 15px;
+        font-size: 1.5rem;
+        color: var(--dark-color);
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1001; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: auto;
+        padding: 20px;
+        border: 1px solid #888;
+        width: 80%;
+        max-width: 400px;
+        border-radius: var(--border-radius);
+        text-align: center;
+    }
+
+    .modal-close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+
+    .modal-close:hover,
+    .modal-close:focus {
+        color: black;
+        text-decoration: none;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1>বর্জ্য শ্রেণিবিভাগ</h1>
+    <p>একটি ছবি আপলোড করুন এবং এটি কোন ধরনের বর্জ্য তা খুঁজে বের করুন।</p>
+
+    <div class="upload-area" id="upload-box">
+        <h3>এখানে একটি ছবি টেনে আনুন অথবা ক্লিক করুন</h3>
+        <input type="file" id="image-upload" accept="image/*" hidden>
+        <span id="file-name">কোনো ফাইল নির্বাচিত হয়নি</span>
+    </div>
+
+    <img id="preview-image" src="#" alt="আপলোড করা ছবির পূর্বরূপ">
+
+    <button id="upload-button" disabled>শ্রেণীবিভাগ করুন</button>
+
+    <div id="prediction-results">
+        <h2>ফলাফল</h2>
+        <div id="results-container">
+            <!-- Prediction bars will be dynamically inserted here -->
+        </div>
+    </div>
+</div>
+
+<div class="loading-overlay" id="loading-overlay">
+    <div class="spinner"></div>
+    <div class="loading-text">অনুগ্রহ করে অপেক্ষা করুন...</div>
+</div>
+
+<!-- Custom Modal -->
+<div id="myModal" class="modal">
+  <div class="modal-content">
+    <span class="modal-close">&times;</span>
+    <p id="modal-message"></p>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const uploadBox = document.getElementById('upload-box');
+        const imageUpload = document.getElementById('image-upload');
+        const fileNameSpan = document.getElementById('file-name');
+        const previewImage = document.getElementById('preview-image');
+        const uploadButton = document.getElementById('upload-button');
+        const resultsContainer = document.getElementById('results-container');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        // Modal elements
+        const modal = document.getElementById('myModal');
+        const modalMessage = document.getElementById('modal-message');
+        const modalClose = document.getElementsByClassName('modal-close')[0];
+
+        let uploadedFile = null;
+
+        // Function to show a custom modal message
+        function showMessage(message) {
+            modalMessage.textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        modalClose.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        uploadBox.addEventListener('click', () => {
+            imageUpload.click();
+        });
+
+        uploadBox.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadBox.style.borderColor = 'var(--primary-color)';
+        });
+
+        uploadBox.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            uploadBox.style.borderColor = 'var(--secondary-color)';
+        });
+
+        uploadBox.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadBox.style.borderColor = 'var(--secondary-color)';
+            const file = e.dataTransfer.files[0];
+            handleFile(file);
+        });
+
+        imageUpload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            handleFile(file);
+        });
+
+        function handleFile(file) {
+            if (file && file.type.startsWith('image/')) {
+                uploadedFile = file;
+                fileNameSpan.textContent = file.name;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    previewImage.src = event.target.result;
+                    previewImage.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+                uploadButton.disabled = false;
+            } else {
+                fileNameSpan.textContent = 'অবৈধ ফাইল ফরম্যাট।';
+                previewImage.style.display = 'none';
+                uploadedFile = null;
+                uploadButton.disabled = true;
+                showMessage('অনুগ্রহ করে একটি বৈধ ছবির ফাইল নির্বাচন করুন।');
+            }
+        }
+
+        uploadButton.addEventListener('click', async () => {
+            if (!uploadedFile) {
+                showMessage('অনুগ্রহ করে একটি ছবি নির্বাচন করুন।');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', uploadedFile);
+
+            loadingOverlay.style.display = 'flex';
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayResults(data.predictions);
+
+            } catch (error) {
+                console.error('Error during prediction:', error);
+                showMessage('শ্রেণীবিভাগ করার সময় একটি ত্রুটি হয়েছে।');
+            } finally {
+                loadingOverlay.style.display = 'none';
+            }
+        });
+
+        function displayResults(predictions) {
+            resultsContainer.innerHTML = '';
+            if (predictions && predictions.length > 0) {
+                predictions.forEach(p => {
+                    const resultBar = document.createElement('div');
+                    resultBar.className = 'result-bar';
+
+                    const label = document.createElement('div');
+                    label.className = 'bar-label';
+                    label.textContent = p.class_name;
+
+                    const progressContainer = document.createElement('div');
+                    progressContainer.className = 'progress-container';
+
+                    const progressBar = document.createElement('div');
+                    progressBar.className = 'progress-bar';
+                    progressBar.style.width = p.probability.toFixed(2) + '%';
+
+                    const progressText = document.createElement('div');
+                    progressText.className = 'progress-text';
+                    progressText.textContent = `${p.probability.toFixed(2)}%`;
+
+                    progressContainer.appendChild(progressBar);
+                    progressContainer.appendChild(progressText);
+
+                    resultBar.appendChild(label);
+                    resultBar.appendChild(progressContainer);
+
+                    resultsContainer.appendChild(resultBar);
+                });
+            } else {
+                resultsContainer.textContent = 'কোনো ফলাফল পাওয়া যায়নি।';
+            }
+        }
+    });
+</script>
+{% endblock %}
