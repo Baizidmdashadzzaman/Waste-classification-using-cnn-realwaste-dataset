@@ -60,9 +60,32 @@
         box-shadow: var(--shadow);
     }
 
-    #prediction-results {
+    /* Side by side layout */
+    .results-wrapper {
+        display: flex;
+        gap: 2rem;
         margin-top: 2rem;
-        text-align: left;
+        align-items: flex-start;
+        flex-wrap: wrap; /* for responsiveness */
+    }
+
+    .preview-container {
+        flex: 1;
+        max-width: 40%;
+    }
+
+    .preview-container img {
+        max-width: 100%;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+    }
+
+    #prediction-results {
+        flex: 2;
+    }
+
+    #prediction-results h2 {
+        margin-top: 0;
     }
 
     .result-bar {
@@ -72,7 +95,7 @@
     }
 
     .bar-label {
-        width: 150px; /* Fixed width for labels */
+        width: 150px;
         flex-shrink: 0;
         font-weight: bold;
     }
@@ -141,15 +164,15 @@
 
     /* Modal styles */
     .modal {
-        display: none; /* Hidden by default */
-        position: fixed; /* Stay in place */
-        z-index: 1001; /* Sit on top */
+        display: none;
+        position: fixed;
+        z-index: 1001;
         left: 0;
         top: 0;
-        width: 100%; /* Full width */
-        height: 100%; /* Full height */
-        overflow: auto; /* Enable scroll if needed */
-        background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.4);
         justify-content: center;
         align-items: center;
     }
@@ -192,14 +215,20 @@
         <span id="file-name">কোনো ফাইল নির্বাচিত হয়নি</span>
     </div>
 
-    <img id="preview-image" src="#" alt="আপলোড করা ছবির পূর্বরূপ">
-
     <button id="upload-button" disabled>শ্রেণীবিভাগ করুন</button>
 
-    <div id="prediction-results">
-        <h2>ফলাফল</h2>
-        <div id="results-container">
-            <!-- Prediction bars will be dynamically inserted here -->
+    <!-- Side by side wrapper -->
+    <div class="results-wrapper">
+        <div class="preview-container">
+            <h2>আপলোড করা ছবি</h2>
+            <img id="preview-image" src="#" alt="আপলোড করা ছবির পূর্বরূপ">
+        </div>
+
+        <div id="prediction-results">
+            <h2>ফলাফল</h2>
+            <div id="results-container">
+                <!-- Prediction bars will be dynamically inserted here -->
+            </div>
         </div>
     </div>
 </div>
@@ -216,7 +245,6 @@
     <p id="modal-message"></p>
   </div>
 </div>
-
 {% endblock %}
 
 {% block scripts %}
@@ -237,7 +265,6 @@
 
         let uploadedFile = null;
 
-        // Function to show a custom modal message
         function showMessage(message) {
             modalMessage.textContent = message;
             modal.style.display = 'flex';
